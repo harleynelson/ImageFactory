@@ -18,18 +18,16 @@ Helps you create datasets for training your YOLOv8 models with images of card co
 4. **Set Parameters**: Adjust the number of images, train/valid/test split ratios, and variation parameters as needed.
 5. **Generate Dataset**: Click the "Generate" button to start creating your dataset.
 6. **Upload to Google Drive**: Upload to "My Drive\Datasets".  Or wherever, just change the data.yaml file to chase it...
-7. **Train**: If using Google Colab:
--**make sure your Google Drive is mounted (left folder looking icon)**
--**!nvidia-smi**    
--**!pip install ultralytics**
--**from ultralytics import YOLO**
--**!yolo task=detect mode=predict model=yolov8n.pt conf=0.25 source='https://ultralytics.com/images/bus.jpg'**
--**!yolo task=detect mode=train model=yolov8n.pt data='../content/drive/MyDrive/Datasets/ImageFactory_{whateverYourDeckNameIs_{numberOfImagesYouGenerated}/data.yaml' epochs=50 imgsz=640**
-8. **Go Ham**: Download best.pt in the weights/ directory and use it in your model
+7. **Train**: If using Google Colab:make sure your Google Drive is mounted (left folder looking icon)
+!nvidia-smi   
+!pip install ultralytics
+from ultralytics import YOLO
+!yolo task=detect mode=predict model=yolov8n.pt conf=0.25 source='https://ultralytics.com/images/bus.jpg'
+!yolo task=detect mode=train model=yolov8n.pt data='../content/drive/MyDrive/Datasets/ImageFactory_{whateverYourDeckNameIs_{numberOfImagesYouGenerated}/data.yaml' epochs=50 imgsz=640 
+8.**Go Ham**: Download best.pt in the weights/ directory and use it in your model
+
 ## TODO
 
 - [ ] Fix grain variation
 - [ ] Add support for additional image variations (size, rotation, etc...)
 - [ ] Probably could use some error handling?
-
-Feel free to add more items to the TODO list as needed!
