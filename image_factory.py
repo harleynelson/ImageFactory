@@ -31,7 +31,7 @@ def load_card_images(deck_path):
 
 # Function to generate a random combination of cards
 def generate_random_card_combination(args):
-    output_image_path, output_label_path, card_images, table_image_path, num_cards, space_between, resize_proportion, brightness_range, grain_range = args
+    output_image_path, output_label_path, card_images, table_image_path, num_cards, space_between, resize_proportion, brightness_range, grain_range, size_variation = args
 
     # Load the table image
     table_image = Image.open(table_image_path).convert("RGBA")
@@ -40,22 +40,17 @@ def generate_random_card_combination(args):
 
     selected_cards = random.sample(list(card_images.keys()), num_cards)
 
-    # Calculate the size of each card based on the resize proportion
-    original_card_width = card_images[selected_cards[0]].width
-    original_card_height = card_images[selected_cards[0]].height
-
-    card_width = int(original_card_width * resize_proportion)
-    card_height = int(original_card_height * resize_proportion)
-
-    total_width = num_cards * card_width + (num_cards - 1) * space_between
-    start_x = (image_size[0] - total_width) // 2
-    y_position = (image_size[1] - card_height) // 2
-
     annotations = []
 
     for i, card_name in enumerate(selected_cards):
         card_image = card_images[card_name].copy()
+
+        # Calculate random resize proportion within the size_variation range
+        actual_resize_proportion = resize_proportion * random.uniform(1 - size_variation, 1 + size_variation)
+
         # Resize card image based on the resize proportion
+        card_width = int(card_image.width * actual_resize_proportion)
+        card_height = int(card_image.height * actual_resize_proportion)
         card_image = card_image.resize((card_width, card_height), Image.LANCZOS)
 
         # Apply brightness variation
@@ -65,13 +60,15 @@ def generate_random_card_combination(args):
             card_image = enhancer.enhance(brightness_factor)
 
         # Apply grain variation
+        # TODO: fix this... breaks with png transparency
         if grain_range > 0:
             grain_amount = random.uniform(0, grain_range)
             noise = Image.effect_noise(card_image.size, grain_amount)
             card_image = Image.composite(card_image, noise.convert('RGBA'), noise)
 
         # Calculate position for each card
-        x_position = start_x + i * (card_width + space_between)
+        x_position = (image_size[0] - num_cards * (card_width + space_between)) // 2 + i * (card_width + space_between)
+        y_position = (image_size[1] - card_height) // 2
 
         # Paste card image onto the combined image
         combined_image.paste(card_image, (x_position, y_position), card_image)
@@ -95,7 +92,7 @@ def generate_random_card_combination(args):
         f.write("\n".join(annotations))
 
 # Function to generate the dataset
-def generate_dataset(deck_path, deck_name, num_images, train_split, valid_split, test_split, brightness_range, grain_range, open_directory):
+def generate_dataset(deck_path, deck_name, num_images, train_split, valid_split, test_split, brightness_range, grain_range, size_variation, open_directory):
     try:
         card_images = load_card_images(deck_path)
         table_image_path = os.path.join(deck_path, 'table', 'table.png')
@@ -118,7 +115,7 @@ def generate_dataset(deck_path, deck_name, num_images, train_split, valid_split,
         for i in range(count):
             output_image_path = os.path.join(output_dir, f'{split}/images/{split}_{i}.png')
             output_label_path = os.path.join(output_dir, f'{split}/labels/{split}_{i}.txt')
-            args = (output_image_path, output_label_path, card_images, table_image_path, 5, 30, 0.9, brightness_range, grain_range)
+            args = (output_image_path, output_label_path, card_images, table_image_path, 5, 30, 0.9, brightness_range, grain_range, size_variation)
             args_list.append(args)
 
     # Use multiprocessing to generate images in parallel
@@ -170,9 +167,10 @@ def start_gui():
         test_split = float(test_split_entry.get())
         brightness_range = brightness_slider.get() / 100
         grain_range = grain_slider.get() / 100
+        size_variation = size_variation_slider.get() / 100
         open_directory = open_directory_var.get()
 
-        generate_dataset(deck_path, deck_name, num_images, train_split, valid_split, test_split, brightness_range, grain_range, open_directory)
+        generate_dataset(deck_path, deck_name, num_images, train_split, valid_split, test_split, brightness_range, grain_range, size_variation, open_directory)
 
     def on_create_deck():
         deck_name = new_deck_name_entry.get()
@@ -249,10 +247,14 @@ def start_gui():
     grain_value_label = ttk.Label(mainframe, text="0%")
     grain_value_label.grid(row=7, column=2, sticky=tk.W, **section_padding)
     grain_slider.config(command=lambda v: grain_value_label.config(text=f"{int(float(v))}%"))
-    ttk.Label(mainframe, text="** currently doesn't work **", font=('TkDefaultFont', 8), foreground='gray').grid(row=8,
-                                                                                                                 column=1,
-                                                                                                                 sticky=tk.W,
-                                                                                                                 padx=20)
+
+    ttk.Label(mainframe, text="Size Variation (0-100%):").grid(row=8, column=0, sticky=tk.W, **section_padding)
+    size_variation_slider = ttk.Scale(mainframe, from_=0, to_=100, orient=tk.HORIZONTAL)
+    size_variation_slider.set(20)  # Default value
+    size_variation_slider.grid(row=8, column=1, sticky=(tk.W, tk.E), **section_padding)
+    size_variation_value_label = ttk.Label(mainframe, text="20%")
+    size_variation_value_label.grid(row=8, column=2, sticky=tk.W, **section_padding)
+    size_variation_slider.config(command=lambda v: size_variation_value_label.config(text=f"{int(float(v))}%"))
 
     ttk.Checkbutton(mainframe, text="Open deck directory after generating dataset", variable=open_directory_var).grid(
         row=9, column=0, columnspan=3, sticky=tk.W, **section_padding)
@@ -260,7 +262,7 @@ def start_gui():
     generate_button = ttk.Button(mainframe, text="Generate", command=on_generate)
     generate_button.grid(row=10, column=0, columnspan=3, sticky=(tk.W, tk.E), **section_padding)
 
-    tk.Label(mainframe, text="Note: a large number of images will lock up the main thread for a while (ie over 300)",
+    tk.Label(mainframe, text="Note: a large number of images (like 1000+) might lock up the main thread for a while too",
              wraplength=300).grid(row=11, column=0, columnspan=3, sticky=tk.W, **section_padding)
 
     ttk.Separator(mainframe, orient='horizontal').grid(row=12, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
@@ -274,6 +276,7 @@ def start_gui():
     create_deck_button.grid(row=13, column=2, sticky=(tk.W, tk.E), **section_padding)
 
     root.mainloop()
+
 
 # Run the GUI
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 # YOLOv8 Dataset Generator for Unique Decks of Cards
 
+### ** For Educational Purposes Only **
 Helps you create datasets for training your YOLOv8 models with images of card combinations on a table background. Basic variations can be applied for brightness and graininess.
 
 ## Features
@@ -30,5 +31,5 @@ Helps you create datasets for training your YOLOv8 models with images of card co
 ## TODO
 
 - [ ] Fix grain variation
-- [ ] Add support for additional image variations (size, rotation, etc...)
+- [ ] Add support for additional image variations (rotation, etc...)
 - [ ] Probably could use some error handling?
