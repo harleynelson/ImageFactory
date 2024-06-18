@@ -9,7 +9,7 @@ Automatically create datasets for training your YOLOv8 models with images of any
 
 - **Support For Multiple Decks**: Add multiple different decks of cards to train for any game.
 - **Dataset Generation**: Specify the number of images and split them into training, validation, and test sets.
-- **Automatic Boundary Box Annotation**: It'll automatically .
+- **Automatic Boundary Box Annotation**: Could always use Roboflow with the images generated if you need manual annotations.
 - **Size, Brightness, Grain Variation**: Add random variations to your images.
 
 ## Getting Started
