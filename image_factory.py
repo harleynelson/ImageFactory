@@ -14,13 +14,13 @@ card_names = [
     '10C', '10D', '10H', '10S', '2C', '2D', '2H', '2S', '3C', '3D', '3H', '3S', '4C', '4D', '4H', '4S',
     '5C', '5D', '5H', '5S', '6C', '6D', '6H', '6S', '7C', '7D', '7H', '7S', '8C', '8D', '8H', '8S',
     '9C', '9D', '9H', '9S', 'AC', 'AD', 'AH', 'AS', 'JC', 'JD', 'JH', 'JS', 'KC', 'KD', 'KH', 'KS',
-    'QC', 'QD', 'QH', 'QS'
+    'QC', 'QD', 'QH', 'QS', 'DealerButton', 'PlayerSlot', 'PlayerActive',
 ]
 
 # Function to load card images
 def load_card_images(deck_path):
     card_images = {}
-    card_images_dir = os.path.join(deck_path, 'cards')
+    card_images_dir = os.path.join(deck_path, 'assets', 'cards')
     if not os.path.exists(card_images_dir):
         raise FileNotFoundError(f"Cards directory not found in {card_images_dir}")
     for filename in os.listdir(card_images_dir):
@@ -92,17 +92,18 @@ def generate_random_card_combination(args):
         f.write("\n".join(annotations))
 
 # Function to generate the dataset
+# Function to generate the dataset
 def generate_dataset(deck_path, deck_name, num_images, train_split, valid_split, test_split, brightness_range, grain_range, size_variation, open_directory):
     try:
         card_images = load_card_images(deck_path)
-        table_image_path = os.path.join(deck_path, 'table', 'table.png')
+        table_image_path = os.path.join(deck_path, 'assets', 'table', 'table.png')
         if not os.path.exists(table_image_path):
             raise FileNotFoundError(f"Table image not found in {table_image_path}")
     except FileNotFoundError as e:
         messagebox.showerror("Error", str(e))
         return
 
-    output_dir = os.path.join(deck_path, f'ImageFactory_{deck_name}_{num_images}')
+    output_dir = os.path.join(deck_path, 'generated_datasets', f'ImageFactory_{deck_name}_{num_images}')
     dirs = ['train/images', 'train/labels', 'valid/images', 'valid/labels', 'test/images', 'test/labels']
     for dir in dirs:
         os.makedirs(os.path.join(output_dir, dir), exist_ok=True)
@@ -139,13 +140,40 @@ def generate_dataset(deck_path, deck_name, num_images, train_split, valid_split,
     if open_directory:
         webbrowser.open(output_dir)
 
+# Function to generate a single sample image
+def generate_single_sample(deck_path, deck_name, brightness_range, grain_range, size_variation, open_directory):
+    try:
+        card_images = load_card_images(deck_path)
+        table_image_path = os.path.join(deck_path, 'assets', 'table', 'table.png')
+        if not os.path.exists(table_image_path):
+            raise FileNotFoundError(f"Table image not found in {table_image_path}")
+    except FileNotFoundError as e:
+        messagebox.showerror("Error", str(e))
+        return
+
+    output_dir = os.path.join(deck_path, 'generated_datasets', 'sample')
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_image_path = os.path.join(output_dir, 'sample_image.png')
+    output_label_path = os.path.join(output_dir, 'sample_label.txt')
+
+    args = (output_image_path, output_label_path, card_images, table_image_path, 5, 30, 0.9, brightness_range, grain_range, size_variation)
+
+    generate_random_card_combination(args)
+
+    # Open the directory if the option is selected
+    if open_directory:
+        webbrowser.open(output_dir)
+
 # Function to create a new deck
 def create_new_deck(deck_name):
     deck_path = os.path.join('deck', deck_name)
     try:
-        os.makedirs(os.path.join(deck_path, 'cards'))
-        os.makedirs(os.path.join(deck_path, 'table'))
-        messagebox.showinfo("Success", f"New deck '{deck_name}' created with 'cards' and 'table' directories.")
+        os.makedirs(os.path.join(deck_path, 'assets', 'cards'))
+        os.makedirs(os.path.join(deck_path, 'assets', 'table'))
+        os.makedirs(os.path.join(deck_path, 'assets', 'players', 'active'))
+        os.makedirs(os.path.join(deck_path, 'assets', 'players', 'inactive'))
+        messagebox.showinfo("Success", f"New deck '{deck_name}' created with 'cards', 'table', 'players/active', and 'players/inactive' directories.")
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
@@ -178,6 +206,16 @@ def start_gui():
             create_new_deck(deck_name)
         else:
             messagebox.showerror("Error", "Please enter a deck name.")
+
+    def on_generate_sample():
+        deck_name = deck_name_var.get()
+        deck_path = deck_path_var.get()
+        brightness_range = brightness_slider.get() / 100
+        grain_range = grain_slider.get() / 100
+        size_variation = size_variation_slider.get() / 100
+        open_directory = open_directory_var.get()
+
+        generate_single_sample(deck_path, deck_name, brightness_range, grain_range, size_variation, open_directory)
 
     def find_decks():
         decks_dir = os.path.join(os.getcwd(), 'deck')
@@ -259,21 +297,24 @@ def start_gui():
     ttk.Checkbutton(mainframe, text="Open deck directory after generating dataset", variable=open_directory_var).grid(
         row=9, column=0, columnspan=3, sticky=tk.W, **section_padding)
 
+    generate_sample_button = ttk.Button(mainframe, text="Generate Sample", command=on_generate_sample)
+    generate_sample_button.grid(row=10, column=0, columnspan=3, sticky=(tk.W, tk.E), **section_padding)
+
     generate_button = ttk.Button(mainframe, text="Generate", command=on_generate)
-    generate_button.grid(row=10, column=0, columnspan=3, sticky=(tk.W, tk.E), **section_padding)
+    generate_button.grid(row=11, column=0, columnspan=3, sticky=(tk.W, tk.E), **section_padding)
 
     tk.Label(mainframe, text="Note: a large number of images (like 1000+) might lock up the main thread for a while too",
-             wraplength=300).grid(row=11, column=0, columnspan=3, sticky=tk.W, **section_padding)
+             wraplength=300).grid(row=12, column=0, columnspan=3, sticky=tk.W, **section_padding)
 
-    ttk.Separator(mainframe, orient='horizontal').grid(row=12, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
+    ttk.Separator(mainframe, orient='horizontal').grid(row=13, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
 
     # Create Deck Section
-    ttk.Label(mainframe, text="New Deck Name:").grid(row=13, column=0, sticky=tk.W, **section_padding)
+    ttk.Label(mainframe, text="New Deck Name:").grid(row=14, column=0, sticky=tk.W, **section_padding)
     new_deck_name_entry = ttk.Entry(mainframe)
-    new_deck_name_entry.grid(row=13, column=1, sticky=(tk.W, tk.E), **section_padding)
+    new_deck_name_entry.grid(row=14, column=1, sticky=(tk.W, tk.E), **section_padding)
 
     create_deck_button = ttk.Button(mainframe, text="Create Deck", command=on_create_deck)
-    create_deck_button.grid(row=13, column=2, sticky=(tk.W, tk.E), **section_padding)
+    create_deck_button.grid(row=14, column=2, sticky=(tk.W, tk.E), **section_padding)
 
     root.mainloop()
 
