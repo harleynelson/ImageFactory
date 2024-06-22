@@ -38,7 +38,7 @@ def generate_single_sample(deck_path, deck_name, brightness_range, grain_range, 
     output_image_path = os.path.join(output_dir, 'sample_image.png')
     output_label_path = os.path.join(output_dir, 'sample_label.txt')
     args = (
-        output_image_path, output_label_path, card_images, None, 5, 30, 0.9, brightness_range, grain_range, size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button
+        output_image_path, output_label_path, card_images, None, 5, 40, 0.9, brightness_range, grain_range, size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button
     )
 
     generate_random_card_combination(args)
@@ -67,7 +67,7 @@ def generate_dataset(deck_path, deck_name, num_images, train_split, valid_split,
         for i in range(count):
             output_image_path = os.path.join(output_dir, f'{split}/images/{split}_{i}.png')
             output_label_path = os.path.join(output_dir, f'{split}/labels/{split}_{i}.txt')
-            args = (output_image_path, output_label_path, card_images, None, 5, 30, 0.9, brightness_range, grain_range,
+            args = (output_image_path, output_label_path, card_images, None, 5, 40, 0.9, brightness_range, grain_range,
                     size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button)
             args_list.append(args)
 
@@ -176,6 +176,8 @@ def generate_random_card_combination(args):
 
         return image
 
+    space_between += 10  # Increase spacing between cards
+
     for i, card_name in enumerate(selected_cards):
         card_image = card_images[card_name].copy()
         card_image = apply_filters(card_image, brightness_range, size_variation)
@@ -219,7 +221,8 @@ def generate_random_card_combination(args):
             center_y = (seat_y) / image_size[1]
             width = seated_image.width / image_size[0]
             height = seated_image.height / image_size[1]
-            annotations.append(f"PlayerSeated {center_x} {center_y} {width} {height}")
+            class_index = len(card_names)  # Assuming PlayerSeated is the next class index after cards
+            annotations.append(f"{class_index} {center_x} {center_y} {width} {height}")
 
             seated_positions.append((seat_x, seat_y, seated_image.width, seated_image.height, slot))
 
@@ -235,7 +238,8 @@ def generate_random_card_combination(args):
                 center_y = (active_y + active_image_filtered.height / 2) / image_size[1]
                 width = active_image_filtered.width / image_size[0]
                 height = active_image_filtered.height / image_size[1]
-                annotations.append(f"PlayerActive {center_x} {center_y} {width} {height}")
+                class_index = len(card_names) + 1  # Assuming PlayerActive is the next class index after PlayerSeated
+                annotations.append(f"{class_index} {center_x} {center_y} {width} {height}")
 
     if include_dealer_button:
         dealer_position = random.choice(seated_positions)
@@ -268,7 +272,8 @@ def generate_random_card_combination(args):
         center_y = (dealer_y) / image_size[1]
         width = dealer_button_filtered.width / image_size[0]
         height = dealer_button_filtered.height / image_size[1]
-        annotations.append(f"DealerButton {center_x} {center_y} {width} {height}")
+        class_index = len(card_names) + 2  # Assuming DealerButton is the next class index after PlayerActive
+        annotations.append(f"{class_index} {center_x} {center_y} {width} {height}")
 
     combined_image.save(output_image_path, format='PNG')
 
