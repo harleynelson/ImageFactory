@@ -1,11 +1,10 @@
-import math
 import os
 import random
 import webbrowser
 from PIL import Image, ImageEnhance
-import yaml
 from multiprocessing import Pool
 from tqdm import tqdm
+from models import yolov8, yolov5
 
 card_names = [
     '10C', '10D', '10H', '10S', '2C', '2D', '2H', '2S', '3C', '3D', '3H', '3S', '4C', '4D', '4H', '4S',
@@ -13,6 +12,11 @@ card_names = [
     '9C', '9D', '9H', '9S', 'AC', 'AD', 'AH', 'AS', 'JC', 'JD', 'JH', 'JS', 'KC', 'KD', 'KH', 'KS',
     'QC', 'QD', 'QH', 'QS'
 ]
+
+model_modules = {
+    'yolov8': yolov8,
+    'yolov5': yolov5
+}
 
 def load_card_images(deck_path):
     card_images = {}
@@ -25,36 +29,36 @@ def load_card_images(deck_path):
             card_images[card_name] = Image.open(os.path.join(card_images_dir, filename)).convert("RGBA")
     return card_images
 
-def generate_single_sample(deck_path, deck_name, brightness_range, grain_range, size_variation, open_directory, include_active_players, include_seated_players, include_dealer_button):
+def generate_single_sample(deck_path, deck_name, brightness_range, grain_range, size_variation, open_directory, include_active_players, include_seated_players, include_dealer_button, selected_model):
     try:
         card_images = load_card_images(deck_path)
     except FileNotFoundError as e:
         print(f"Error: {e}")
         return
 
-    output_dir = os.path.join(deck_path, 'generated_datasets', 'sample')
+    output_dir = os.path.join(deck_path, f'generated_datasets/ImageFactory_{deck_name}_{selected_model}_sample')
     os.makedirs(output_dir, exist_ok=True)
 
     output_image_path = os.path.join(output_dir, 'sample_image.png')
     output_label_path = os.path.join(output_dir, 'sample_label.txt')
     args = (
-        output_image_path, output_label_path, card_images, None, 5, 40, 0.9, brightness_range, grain_range, size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button
+        output_image_path, output_label_path, card_images, None, 5, 40, 0.9, brightness_range, grain_range, size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button, selected_model
     )
 
-    generate_random_card_combination(args)
+    generate_random_card_combination(*args)
 
     if open_directory:
         webbrowser.open(output_dir)
 
 def generate_dataset(deck_path, deck_name, num_images, train_split, valid_split, test_split, brightness_range,
-                     grain_range, size_variation, open_directory, include_active_players, include_seated_players, include_dealer_button):
+                     grain_range, size_variation, open_directory, include_active_players, include_seated_players, include_dealer_button, selected_model):
     try:
         card_images = load_card_images(deck_path)
     except FileNotFoundError as e:
         print(f"Error: {e}")
         return
 
-    output_dir = os.path.join(deck_path, 'generated_datasets', f'ImageFactory_{deck_name}_{num_images}')
+    output_dir = os.path.join(deck_path, f'generated_datasets/ImageFactory_{deck_name}_{selected_model}_{num_images}')
     dirs = ['train/images', 'train/labels', 'valid/images', 'valid/labels', 'test/images', 'test/labels']
     for dir in dirs:
         os.makedirs(os.path.join(output_dir, dir), exist_ok=True)
@@ -68,35 +72,21 @@ def generate_dataset(deck_path, deck_name, num_images, train_split, valid_split,
             output_image_path = os.path.join(output_dir, f'{split}/images/{split}_{i}.png')
             output_label_path = os.path.join(output_dir, f'{split}/labels/{split}_{i}.txt')
             args = (output_image_path, output_label_path, card_images, None, 5, 40, 0.9, brightness_range, grain_range,
-                    size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button)
+                    size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button, selected_model)
             args_list.append(args)
 
     with Pool() as pool:
-        for _ in tqdm(pool.imap_unordered(generate_random_card_combination, args_list), total=len(args_list)):
+        for _ in tqdm(pool.imap_unordered(generate_random_card_combination_wrapper, args_list), total=len(args_list)):
             pass
 
-    selected_classes = card_names[:]
-    if include_dealer_button:
-        selected_classes.append('DealerButton')
-    if include_active_players:
-        selected_classes.append('PlayerActive')
-    if include_seated_players:
-        selected_classes.append('PlayerSeated')
-
-    data = {
-        'path': f'../drive/MyDrive/Datasets/ImageFactory_{deck_name}_{num_images}',
-        'train': '../train/images',
-        'val': '../valid/images',
-        'test': '../test/images',
-        'nc': len(selected_classes),
-        'names': selected_classes
-    }
-
-    with open(os.path.join(output_dir, 'data.yaml'), 'w') as f:
-        yaml.dump(data, f, default_flow_style=None)
+    model_module = model_modules[selected_model]
+    model_module.save_annotations_and_metadata(output_dir, card_names, include_dealer_button, include_active_players, include_seated_players, deck_name, selected_model, num_images)
 
     if open_directory:
         webbrowser.open(output_dir)
+
+def generate_random_card_combination_wrapper(args):
+    generate_random_card_combination(*args)
 
 def create_new_deck(deck_name):
     deck_path = os.path.join('deck', deck_name)
@@ -107,6 +97,7 @@ def create_new_deck(deck_name):
         os.makedirs(os.path.join(deck_path, 'assets', 'players', 'seated'))
         print(
             f"New deck '{deck_name}' created with 'cards', 'table', 'players/active', and 'players/seated' directories.")
+        webbrowser.open(deck_path)  # Open the new deck directory
     except Exception as e:
         print(f"Error: {e}")
 
@@ -154,9 +145,7 @@ def generate_random_gradient(image_size):
     base.paste(top, (0, 0), mask)
     return base
 
-def generate_random_card_combination(args):
-    output_image_path, output_label_path, card_images, _, num_cards, space_between, resize_proportion, brightness_range, grain_range, size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button = args
-
+def generate_random_card_combination(output_image_path, output_label_path, card_images, _, num_cards, space_between, resize_proportion, brightness_range, grain_range, size_variation, deck_path, include_active_players, include_seated_players, include_dealer_button, selected_model):
     image_size = (1024, 768)  # Set your desired image size
     combined_image = generate_random_gradient(image_size)
 
@@ -196,6 +185,10 @@ def generate_random_card_combination(args):
 
     seated_images, active_image, dealer_button = load_player_images(deck_path)
 
+    player_seated_class_index = len(card_names)  # Assuming PlayerSeated is the next class index after cards
+    player_active_class_index = len(card_names) + 1  # Assuming PlayerActive is the next class index after PlayerSeated
+    dealer_button_class_index = len(card_names) + 2  # Assuming DealerButton is the next class index after PlayerActive
+
     if include_seated_players:
         num_seated = random.randint(2, 6)
         slots = [
@@ -221,8 +214,7 @@ def generate_random_card_combination(args):
             center_y = (seat_y) / image_size[1]
             width = seated_image.width / image_size[0]
             height = seated_image.height / image_size[1]
-            class_index = len(card_names)  # Assuming PlayerSeated is the next class index after cards
-            annotations.append(f"{class_index} {center_x} {center_y} {width} {height}")
+            annotations.append(f"{player_seated_class_index} {center_x} {center_y} {width} {height}")
 
             seated_positions.append((seat_x, seat_y, seated_image.width, seated_image.height, slot))
 
@@ -238,8 +230,7 @@ def generate_random_card_combination(args):
                 center_y = (active_y + active_image_filtered.height / 2) / image_size[1]
                 width = active_image_filtered.width / image_size[0]
                 height = active_image_filtered.height / image_size[1]
-                class_index = len(card_names) + 1  # Assuming PlayerActive is the next class index after PlayerSeated
-                annotations.append(f"{class_index} {center_x} {center_y} {width} {height}")
+                annotations.append(f"{player_active_class_index} {center_x} {center_y} {width} {height}")
 
     if include_dealer_button:
         dealer_position = random.choice(seated_positions)
@@ -272,8 +263,7 @@ def generate_random_card_combination(args):
         center_y = (dealer_y) / image_size[1]
         width = dealer_button_filtered.width / image_size[0]
         height = dealer_button_filtered.height / image_size[1]
-        class_index = len(card_names) + 2  # Assuming DealerButton is the next class index after PlayerActive
-        annotations.append(f"{class_index} {center_x} {center_y} {width} {height}")
+        annotations.append(f"{dealer_button_class_index} {center_x} {center_y} {width} {height}")
 
     combined_image.save(output_image_path, format='PNG')
 
