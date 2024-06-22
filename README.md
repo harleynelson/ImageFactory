@@ -3,7 +3,8 @@
 ### ** For Educational Purposes Only **
 Automatically create datasets for training your YOLOv8 models with images of any cards without manual annotating.
 
-![sample](https://github.com/harleynelson/ImageFactory/assets/12590891/5f62ce21-114b-4096-92fc-8256a3d638d2)
+![test_22](https://github.com/harleynelson/ImageFactory/assets/12590891/ef948fad-c06d-4c2b-b009-cdd9e8bc5e01)
+
 
 ## Features
 
@@ -14,10 +15,11 @@ Automatically create datasets for training your YOLOv8 models with images of any
 
 ## Getting Started
 
-![Screenshot 2024-06-18 164950](https://github.com/harleynelson/ImageFactory/assets/12590891/13008594-9786-4a98-84a0-52c98cceb3fe)
+![Screenshot 2024-06-21 211337](https://github.com/harleynelson/ImageFactory/assets/12590891/71ca7f1b-9261-49ad-a194-3960fcb8aae9)
+
 
 1. **Create a New Deck**: Enter a name in the "New Deck Name" field and click "Create Deck" to make a new deck.
-2. **Add Deck and Table Images**: Create a deck of 52 cards (no jokers) and place them in the 'cards' directory.  Follow the same naming convention (5D.png = 5 of Diamonds, JS.png = Jack of Spades, etc...). Place an empty looking poker table image 'table.png' in the 'table' directory.  Note: if your image sizes are significantly different than the test ones you may have to edit image_factory.py to make the sizing jive.
+2. **Add Deck and Table Images**: Create a deck of 52 cards (no jokers) and place them in the 'cards' directory.  Follow the same naming convention (5D.png = 5 of Diamonds, JS.png = Jack of Spades, etc...). Note: if your image sizes are significantly different than the test ones you may have to edit image_factory.py to make the sizing jive.
 3. **Select a Deck**: If multiple decks are detected in the `deck` directory, select the desired deck using the "Select Deck" button.
 4. **Set Parameters**: Adjust the number of images, train/valid/test split ratios, and variation parameters as needed.
 5. **Generate Dataset**: Click the "Generate" button to start creating your dataset.
