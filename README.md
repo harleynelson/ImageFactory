@@ -2,8 +2,7 @@
 
 Automatically create datasets for training your YOLOv8 models with images of any cards without manually annotating.
 
-
-![sample](https://github.com/harleynelson/ImageFactory/assets/12590891/40a0bae3-6787-4023-8592-fa072e6422f7)
+![sample](https://github.com/harleynelson/ImageFactory/assets/12590891/c9602fea-fd88-4dc8-a21d-2cf1094004b6)
 
 
 ## Features
@@ -15,7 +14,7 @@ Automatically create datasets for training your YOLOv8 models with images of any
 
 ## Getting Started
 
-![Screenshot 2024-06-21 211337](https://github.com/harleynelson/ImageFactory/assets/12590891/71ca7f1b-9261-49ad-a194-3960fcb8aae9)
+![Screenshot 2024-06-22 001941](https://github.com/harleynelson/ImageFactory/assets/12590891/d75c5dc4-3229-4661-8e8a-a2644c57b5fe)
 
 
 1. **Create a New Deck**: Enter a name in the `New Deck Name` field and click `Create Deck` to make a new deck.
@@ -44,7 +43,7 @@ Automatically create datasets for training your YOLOv8 models with images of any
 
 
 ## TODO
-- [ ] Add support for multiple model types
+- [ ] Add support for more model types
 - [ ] Fix grain variation
 - [ ] Add support for additional image variations (rotation, skew, etc...)
 - [ ] Probably could use some better error handling?
