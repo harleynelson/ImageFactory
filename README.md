@@ -44,6 +44,7 @@ Automatically create datasets for training your YOLOv8 models with images of any
 
 
 ## TODO
+- [ ] Add support for multiple model types
 - [ ] Fix grain variation
 - [ ] Add support for additional image variations (rotation, skew, etc...)
 - [ ] Probably could use some better error handling?
