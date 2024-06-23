@@ -122,9 +122,9 @@ def start_gui():
 
     ttk.Label(mainframe, text="Brightness Variation (0-100%):").grid(row=8, column=0, sticky=tk.W, **section_padding)
     brightness_slider = ttk.Scale(mainframe, from_=0, to_=100, orient=tk.HORIZONTAL)
-    brightness_slider.set(15)  # Default value
+    brightness_slider.set(40)  # Default value
     brightness_slider.grid(row=8, column=1, sticky=(tk.W, tk.E), **section_padding)
-    brightness_value_label = ttk.Label(mainframe, text="15%")
+    brightness_value_label = ttk.Label(mainframe, text="40%")
     brightness_value_label.grid(row=8, column=2, sticky=tk.W, **section_padding)
     brightness_slider.config(command=lambda v: brightness_value_label.config(text=f"{int(float(v))}%"))
 
@@ -138,9 +138,9 @@ def start_gui():
 
     ttk.Label(mainframe, text="Size Variation (0-100%):").grid(row=10, column=0, sticky=tk.W, **section_padding)
     size_variation_slider = ttk.Scale(mainframe, from_=0, to_=100, orient=tk.HORIZONTAL)
-    size_variation_slider.set(20)  # Default value
+    size_variation_slider.set(25)  # Default value
     size_variation_slider.grid(row=10, column=1, sticky=(tk.W, tk.E), **section_padding)
-    size_variation_value_label = ttk.Label(mainframe, text="20%")
+    size_variation_value_label = ttk.Label(mainframe, text="25%")
     size_variation_value_label.grid(row=10, column=2, sticky=tk.W, **section_padding)
     size_variation_slider.config(command=lambda v: size_variation_value_label.config(text=f"{int(float(v))}%"))
 
